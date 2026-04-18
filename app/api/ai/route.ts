@@ -1,22 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-type Transaction = {
-  type: string;
-  amount: number;
-  date: Date;
-  description: string;
-  category?: { name: string } | null;
-};
-
 export async function POST(req: Request) {
   const { message } = await req.json();
   const msg = message.toLowerCase();
 
-  const transactions: Transaction[] = await prisma.expense.findMany({
+  const rawTransactions = await prisma.expense.findMany({
     include: { category: true },
     orderBy: { date: "desc" },
   });
+
+  const transactions = rawTransactions as Array<{
+    type: string;
+    amount: number;
+    date: Date;
+    description: string;
+    category?: { name: string } | null;
+  }>;
 
   const income = transactions
     .filter((t) => t.type === "income")
@@ -76,9 +76,9 @@ export async function POST(req: Request) {
     }
   } else if (msg.includes("top") || msg.includes("biggest") || msg.includes("most") || msg.includes("category")) {
     if (topCategory) {
-      reply = `Your biggest spending category is ${topCategory[0]} with ₹${topCategory[1].toFixed(2)} spent. Here is your full breakdown: ${byCategory.map(([name, amount]) => `${name}: ₹${Number(amount).toFixed(2)}`).join(", ")}.`;
+      reply = `Your biggest spending category is ${topCategory[0]} with ₹${topCategory[1].toFixed(2)} spent. Breakdown: ${byCategory.map(([name, amount]) => `${name}: ₹${Number(amount).toFixed(2)}`).join(", ")}.`;
     } else {
-      reply = `You don't have any categorized expenses yet. Add categories to your transactions to see the breakdown.`;
+      reply = `You do not have any categorized expenses yet.`;
     }
   } else if (msg.includes("tip") || msg.includes("advice") || msg.includes("suggest") || msg.includes("cut") || msg.includes("reduce")) {
     const tips = [];
@@ -91,11 +91,11 @@ export async function POST(req: Request) {
   } else if (msg.includes("transaction") || msg.includes("recent")) {
     reply = `Your recent expenses are: ${recentExpenses || "no expenses yet"}. You have ${transactions.length} total transactions.`;
   } else if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
-    reply = `Hello! I'm your finance assistant. Your balance is ₹${balance.toFixed(2)}. You can ask me about your spending, income, savings, or tips to save money!`;
+    reply = `Hello! I am your finance assistant. Your balance is ₹${balance.toFixed(2)}. Ask me about spending, income, savings or tips!`;
   } else if (msg.includes("how are you")) {
-    reply = `I'm doing great! Your finances show a balance of ₹${balance.toFixed(2)}. How can I help you today?`;
+    reply = `I am doing great! Your balance is ₹${balance.toFixed(2)}. How can I help you today?`;
   } else {
-    reply = `I can help you with: your balance (₹${balance.toFixed(2)}), spending (₹${expenses.toFixed(2)} total), income (₹${income.toFixed(2)} total), savings rate (${savingsRate.toFixed(1)}%), top categories, and money-saving tips. What would you like to know?`;
+    reply = `I can help with: balance (₹${balance.toFixed(2)}), spending (₹${expenses.toFixed(2)}), income (₹${income.toFixed(2)}), savings rate (${savingsRate.toFixed(1)}%), categories, and money tips. What would you like to know?`;
   }
 
   return NextResponse.json({ message: reply });
