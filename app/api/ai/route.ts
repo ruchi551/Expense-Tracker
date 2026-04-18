@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -11,42 +12,43 @@ export async function POST(req: Request) {
   });
 
   const income = transactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter((t: any) => t.type === "income")
+    .reduce((sum: number, t: any) => sum + t.amount, 0);
 
   const expenses = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter((t: any) => t.type === "expense")
+    .reduce((sum: number, t: any) => sum + t.amount, 0);
 
   const balance = income - expenses;
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
   const now = new Date();
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
   const thisMonthExpenses = transactions
-    .filter((t) => t.type === "expense" && new Date(t.date) >= thisMonthStart)
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter((t: any) => t.type === "expense" && new Date(t.date) >= thisMonthStart)
+    .reduce((sum: number, t: any) => sum + t.amount, 0);
 
   const thisMonthIncome = transactions
-    .filter((t) => t.type === "income" && new Date(t.date) >= thisMonthStart)
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter((t: any) => t.type === "income" && new Date(t.date) >= thisMonthStart)
+    .reduce((sum: number, t: any) => sum + t.amount, 0);
 
   const byCategory = Object.entries(
     transactions
-      .filter((t) => t.type === "expense" && t.category)
-      .reduce((acc, t) => {
-        const name = t.category!.name;
+      .filter((t: any) => t.type === "expense" && t.category)
+      .reduce((acc: Record<string, number>, t: any) => {
+        const name = t.category.name;
         acc[name] = (acc[name] || 0) + t.amount;
         return acc;
-      }, {} as Record<string, number>)
+      }, {})
   ).sort((a, b) => b[1] - a[1]);
 
   const topCategory = byCategory[0];
 
   const recentExpenses = transactions
-    .filter((t) => t.type === "expense")
+    .filter((t: any) => t.type === "expense")
     .slice(0, 3)
-    .map((t) => `${t.description} (₹${t.amount})`)
+    .map((t: any) => `${t.description} (₹${t.amount})`)
     .join(", ");
 
   let reply = "";
@@ -67,14 +69,14 @@ export async function POST(req: Request) {
     }
   } else if (msg.includes("top") || msg.includes("biggest") || msg.includes("most") || msg.includes("category")) {
     if (topCategory) {
-      reply = `Your biggest spending category is ${topCategory[0]} with ₹${topCategory[1].toFixed(2)} spent. Here is your full breakdown: ${byCategory.map(([name, amount]) => `${name}: ₹${amount.toFixed(2)}`).join(", ")}.`;
+      reply = `Your biggest spending category is ${topCategory[0]} with ₹${topCategory[1].toFixed(2)} spent. Here is your full breakdown: ${byCategory.map(([name, amount]) => `${name}: ₹${(amount as number).toFixed(2)}`).join(", ")}.`;
     } else {
       reply = `You don't have any categorized expenses yet. Add categories to your transactions to see the breakdown.`;
     }
   } else if (msg.includes("tip") || msg.includes("advice") || msg.includes("suggest") || msg.includes("cut") || msg.includes("reduce")) {
     const tips = [];
     if (savingsRate < 20) tips.push("Try to save at least 20% of your income each month.");
-    if (topCategory) tips.push(`Your biggest expense is ${topCategory[0]} at ₹${topCategory[1].toFixed(2)} — see if you can reduce it.`);
+    if (topCategory) tips.push(`Your biggest expense is ${topCategory[0]} at ₹${(topCategory[1] as number).toFixed(2)} — see if you can reduce it.`);
     if (balance < 0) tips.push("You are spending more than you earn. Cut non-essential expenses immediately.");
     tips.push("Track every expense no matter how small.");
     tips.push("Set a monthly budget for each category.");
