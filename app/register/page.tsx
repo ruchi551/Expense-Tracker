@@ -1,11 +1,11 @@
 "use client";
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,18 +16,21 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
     });
 
-    if (result?.error) {
-      setError("Invalid email or password");
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Something went wrong");
       setLoading(false);
-    } else {
-      router.push("/dashboard");
+      return;
     }
+
+    router.push("/login?registered=true");
   }
 
   return (
@@ -43,8 +46,8 @@ export default function LoginPage() {
       }}>
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <div style={{ fontSize: "40px", marginBottom: "8px" }}>💰</div>
-          <h1 style={{ fontSize: "24px", fontWeight: 700 }}>Welcome back</h1>
-          <p style={{ color: "#666", fontSize: "14px" }}>Sign in to your account</p>
+          <h1 style={{ fontSize: "24px", fontWeight: 700 }}>Create account</h1>
+          <p style={{ color: "#666", fontSize: "14px" }}>Start tracking your expenses</p>
         </div>
 
         {error && (
@@ -58,6 +61,16 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", fontSize: "13px", fontWeight: 500, marginBottom: "6px" }}>Full name</label>
+            <input
+              type="text" value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ width: "100%", border: "1.5px solid #e5e7eb", borderRadius: "10px", padding: "10px 14px", fontSize: "14px", boxSizing: "border-box" }}
+              placeholder="Ruchi Kumari"
+              required
+            />
+          </div>
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ display: "block", fontSize: "13px", fontWeight: 500, marginBottom: "6px" }}>Email</label>
             <input
@@ -76,6 +89,7 @@ export default function LoginPage() {
               style={{ width: "100%", border: "1.5px solid #e5e7eb", borderRadius: "10px", padding: "10px 14px", fontSize: "14px", boxSizing: "border-box" }}
               placeholder="••••••••"
               required
+              minLength={6}
             />
           </div>
           <button
@@ -89,14 +103,14 @@ export default function LoginPage() {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
         <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "14px", color: "#666" }}>
-          Don't have an account?{" "}
-          <Link href="/register" style={{ color: "#6366f1", fontWeight: 500, textDecoration: "none" }}>
-            Create one
+          Already have an account?{" "}
+          <Link href="/login" style={{ color: "#6366f1", fontWeight: 500, textDecoration: "none" }}>
+            Sign in
           </Link>
         </p>
       </div>

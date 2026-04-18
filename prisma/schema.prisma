@@ -10,24 +10,26 @@ model User {
   id        String    @id @default(cuid())
   email     String    @unique
   name      String?
+  password  String?
   createdAt DateTime  @default(now())
   expenses  Expense[]
 }
 
 model Category {
-  id             String           @id @default(cuid())
-  name           String
-  color          String           @default("#6366f1")
-  expenses       Expense[]
+  id               String           @id @default(cuid())
+  name             String
+  color            String           @default("#6366f1")
+  expenses         Expense[]
   budgetCategories BudgetCategory[]
 }
 
 model Expense {
   id          String    @id @default(cuid())
   amount      Float
-  currency    String    @default("USD")
+  currency    String    @default("INR")
   description String
   date        DateTime
+  type        String    @default("expense")
   createdAt   DateTime  @default(now())
   userId      String
   categoryId  String?

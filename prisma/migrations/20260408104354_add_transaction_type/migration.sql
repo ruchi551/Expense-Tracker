@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Expense" ADD COLUMN     "type" TEXT NOT NULL DEFAULT 'expense',
+ALTER COLUMN "currency" SET DEFAULT 'INR';
