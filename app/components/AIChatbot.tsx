@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 
 type Message = { role: "user" | "ai"; text: string };
 
@@ -12,12 +13,16 @@ const SUGGESTIONS = [
 ];
 
 export default function AIChatbot() {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: "ai", text: "Hi! I'm your AI finance assistant. Ask me anything about your spending!" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Don't show chatbot if not logged in
+  if (!session) return null;
 
   async function sendMessage(text: string) {
     if (!text.trim()) return;
